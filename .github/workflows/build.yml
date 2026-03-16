@@ -38,7 +38,7 @@ jobs:
 
     - name: Install gomobile
       run: |
-        go install github.com/sagernet/gomobile@latest
+        go install github.com/sagernet/gomobile/cmd/gomobile@latest
         echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
         export PATH=$PATH:$(go env GOPATH)/bin
         gomobile init
