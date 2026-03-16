@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build SpicyVPN APK
 
 on:
   push:
@@ -16,6 +16,14 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Checkout core
+      uses: actions/checkout@v4
+      with:
+        repository: SagerNet/sing-box
+        path: core
+        ref: v1.14.0-alpha.3
+        fetch-depth: 1
+
     - name: set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -23,14 +31,42 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: Install gomobile
+      run: |
+        go install github.com/sagernet/gomobile@latest
+        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        export PATH=$PATH:$(go env GOPATH)/bin
+        gomobile init
+
+    - name: Build libbox
+      run: |
+        export PATH=$PATH:$(go env GOPATH)/bin
+        # Export NDK home for gomobile
+        export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk-bundle
+        if [ ! -d "$ANDROID_NDK_HOME" ]; then
+          # Fallback to any available NDK
+          export ANDROID_NDK_HOME=$(ls -d $ANDROID_SDK_ROOT/ndk/* | head -1)
+        fi
+        echo "Using NDK: $ANDROID_NDK_HOME"
+        cd core
+        go run ./cmd/internal/build_libbox/main.go -target android
+        mkdir -p ../app/libs
+        cp libbox.aar ../app/libs/
+        cp libbox-legacy.aar ../app/libs/
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      run: ./gradlew assembleRelease
+      run: ./gradlew assembleOtherRelease
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release-apk
-        path: app/build/outputs/apk/release/*.apk
+        name: SpicyVPN-APK
+        path: app/build/outputs/apk/other/release/*.apk

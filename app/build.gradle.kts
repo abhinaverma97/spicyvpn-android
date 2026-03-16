@@ -67,12 +67,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.nekohasekai.sfa"
+        applicationId = "com.spicyvpn.android"
         minSdk = 21
         targetSdk = 35
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
-        base.archivesName.set("SFA-${versionName}")
+        base.archivesName.set("SpicyVPN-${versionName}")
     }
 
     signingConfigs {
@@ -93,7 +93,11 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            if (file("release.keystore").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             vcsInfo.include = false
         }
     }
