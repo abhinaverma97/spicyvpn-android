@@ -53,14 +53,19 @@ public class SpicyVPNPlugin extends Plugin {
     }
 
     private void doStartVPN(PluginCall call, String url) {
-        try {
-            BoxManager.getInstance().start(getContext(), url);
-            JSObject ret = new JSObject();
-            ret.put("success", true);
-            call.resolve(ret);
-        } catch (Exception e) {
-            call.reject("Failed to start VPN: " + e.getMessage());
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    BoxManager.getInstance().start(getContext(), url);
+                    JSObject ret = new JSObject();
+                    ret.put("success", true);
+                    call.resolve(ret);
+                } catch (Exception e) {
+                    call.reject("Failed to start VPN: " + e.getMessage());
+                }
+            }
+        }).start();
     }
 
     @Override
