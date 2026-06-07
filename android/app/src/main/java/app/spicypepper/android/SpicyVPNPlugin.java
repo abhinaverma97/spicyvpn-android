@@ -8,6 +8,8 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.ActivityCallback;
+import androidx.activity.result.ActivityResult;
 
 @CapacitorPlugin(name = "SpicyVPN")
 public class SpicyVPNPlugin extends Plugin {
@@ -44,8 +46,7 @@ public class SpicyVPNPlugin extends Plugin {
 
         Intent intent = VpnService.prepare(getContext());
         if (intent != null) {
-            saveCall(call);
-            startActivityForResult(call, intent, VPN_PREPARE_REQUEST);
+            startActivityForResult(call, intent, "vpnPrepareResult");
             return;
         }
 
@@ -68,18 +69,13 @@ public class SpicyVPNPlugin extends Plugin {
         }).start();
     }
 
-    @Override
-    protected void handleOnActivityResult(int requestCode, int resultCode, Intent data) {
-        super.handleOnActivityResult(requestCode, resultCode, data);
-        if (requestCode == VPN_PREPARE_REQUEST) {
-            PluginCall savedCall = getSavedCall();
-            if (savedCall != null) {
-                if (resultCode == android.app.Activity.RESULT_OK) {
-                    doStartVPN(savedCall, savedCall.getString("url"));
-                } else {
-                    savedCall.reject("VPN permission denied");
-                }
-            }
+    @ActivityCallback
+    private void vpnPrepareResult(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        if (result.getResultCode() == android.app.Activity.RESULT_OK) {
+            doStartVPN(call, call.getString("url"));
+        } else {
+            call.reject("VPN permission denied");
         }
     }
 
